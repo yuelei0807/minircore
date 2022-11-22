@@ -27,8 +27,20 @@ pub extern "C" fn _start() -> ! {
 
     minircore::init();
 
+    // for each recursion, the return address is pushed
+    //fn stack_overflow() {
+    //    stack_overflow(); 
+    //}
+
+    // trigger a stack overflow
+    //stack_overflow();
+
+    // trigger a page fault
+    //unsafe {
+        //*(0xdeadbeef as *mut u64) = 42;
+    //};
     //invoke a breakpoint exception
-    x86_64::instructions::interrupts::int3();
+    //x86_64::instructions::interrupts::int3();
 
     #[cfg(test)]
     test_main();
