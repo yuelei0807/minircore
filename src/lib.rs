@@ -36,9 +36,9 @@ pub fn test_runner(tests: &[&dyn Testable]) {
 
 pub fn test_panic_handler(info: &PanicInfo) -> ! {
     serial_println!("[failed]\n");
-    serial_println!("Error: {}\n", info);
+    serial_println!("[Error]: {}\n", info);
     exit_qemu(QemuExitCode::Failed);
-    loop {}
+    hlt_loop();
 }
 
 //entry point of 'cargo test'
@@ -47,8 +47,8 @@ pub fn test_panic_handler(info: &PanicInfo) -> ! {
 pub extern "C" fn _start() -> ! {
     init(); 
     test_main();
-    #[allow(clippy::empty_loop)]
-    loop {}
+    //#[allow(clippy::empty_loop)]
+    hlt_loop();
 }
 
 //introduce a general init function
@@ -82,3 +82,9 @@ pub fn exit_qemu(exit_code: QemuExitCode) {
     }
 }
 
+//create an energy-efficient endless loop
+pub fn hlt_loop() -> ! {
+    loop {
+        x86_64::instructions::hlt();
+    }
+}

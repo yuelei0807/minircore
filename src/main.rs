@@ -12,7 +12,7 @@ pub trait Testable {
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     println!("{info}");
-    loop {}
+    minircore::hlt_loop();
 }
 
 #[cfg(test)]
@@ -47,12 +47,9 @@ pub extern "C" fn _start() -> ! {
 
     println!("It did not crash!");
 
-    #[allow(clippy::empty_loop)]
-    loop {
-        use minircore::print;
-        print!("-");
-        for _ in 0..10000 {}
-    }
+    //use the hlt_loop instead of the endless loop
+    minircore::hlt_loop();
+    //#[allow(clippy::empty_loop)]
 }
 
 

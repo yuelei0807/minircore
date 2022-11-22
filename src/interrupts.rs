@@ -10,6 +10,8 @@ use spin;
 #[repr(u8)]
 pub enum InterruptIndex {
     Timer = PIC_1_OFFSET,
+    //add Keyboard variant to the InterruptIndex enum
+    Keyboard,
 }
 
 impl InterruptIndex {
@@ -33,11 +35,12 @@ lazy_static! {
 
         //set the stack index for our double fault handler in the IDT
         unsafe {
-            idt.double_fault.set_handler_fn(double_fault_handler)
-                .set_stack_index(gdt::DOUBLE_FAULT_IST_INDEX);
+            idt.double_fault.set_handler_fn(double_fault_handler).set_stack_index(gdt::DOUBLE_FAULT_IST_INDEX);
         }
         //add a handler function for the timer interrupt
         idt[InterruptIndex::Timer.as_usize()].set_handler_fn(timer_interrupt_handler);
+        //add a handler function for the keyboard interrupt
+        idt[InterruptIndex::Keyboard.as_usize()].set_handler_fn(keyboard_interrupt_handler);
         idt
     };
 }
@@ -81,3 +84,56 @@ extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: InterruptStackFr
     }
 }
 
+extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: InterruptStackFrame) {
+    //print a k and send the end of interrupt signal to the interrupt controller
+    //print!("k");
+    use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
+    use spin::Mutex;
+    use x86_64::instructions::port::Port;
+
+    //use the lazy_static macro to create a static Keyboard object protected by a Mutex
+    lazy_static! {
+        //initialize the Keyboard with a US keyboard layout and the scancode set 1
+        static ref KEYBOARD: Mutex<Keyboard<layouts::Us104Key, ScancodeSet1>> = //use the Ignore option to handle the ctrl like normal keys
+            Mutex::new(Keyboard::new(layouts::Us104Key, ScancodeSet1, HandleControl::Ignore)
+            );
+    }
+
+    let mut keyboard = KEYBOARD.lock();
+
+    //read from the I/O port with the number 0x60
+    let mut port = Port::new(0x60);
+    let scancode: u8 = unsafe { port.read() };
+    //On each interrupt, lock the Mutex, read the scancode from the keyboard controller, and pass it to the add_byte method, which translates the scancode into an Option<KeyEvent>
+    if let Ok(Some(key_event)) = keyboard.add_byte(scancode) {
+        //pass the key_event to the process_keyevent method, which translates the key event to a character
+        if let Some(key) = keyboard.process_keyevent(key_event) {
+            match key {
+                DecodedKey::Unicode(character) => print!("{}", character),
+                DecodedKey::RawKey(key) => print!("{:?}", key),
+            }
+        }
+    }
+
+    //translates keypresses of the number keys 0-9 and ignores all other keys
+    //let key = match scancode {
+        //0x02 => Some('1'),
+        //0x03 => Some('2'),
+        //0x04 => Some('3'),
+        //0x05 => Some('4'),
+        //0x06 => Some('5'),
+        //0x07 => Some('6'),
+        //0x08 => Some('7'),
+        //0x09 => Some('8'),
+        //0x0a => Some('9'),
+        //0x0b => Some('0'),
+        //_ => None,
+    //};
+    //if let Some(key) = key {
+    //    print!("{}", key);
+    //}
+
+    unsafe {
+        PICS.lock().notify_end_of_interrupt(InterruptIndex::Keyboard.as_u8());
+    }
+}
