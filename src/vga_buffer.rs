@@ -1,7 +1,7 @@
 //support Rust's formatting macros, like integers
 use core::fmt::{Write, Result};
-use spin::Mutex;
 use lazy_static::lazy_static;
+use spin::Mutex;
 use volatile::Volatile;
 //This attribute disables warnings isuued by the compiler for any unused variant in the Color enum 
 #[allow(dead_code)]
@@ -158,6 +158,7 @@ impl Write for Writer {
     }
 }
 
+/*
 pub fn print_something() {
     //create a new Writer
     let mut writer = Writer {
@@ -177,3 +178,4 @@ pub fn print_something() {
     write!(writer, "Yue Lei's test").unwrap();
     write!(writer, "The numbers are {} and {}", 42, 1.0/3.0).unwrap();
 }
+*/
