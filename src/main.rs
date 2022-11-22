@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 #![feature(custom_test_frameworks)]
-#![test_runner(blog_os::test_runner)]
+#![test_runner(minircore::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 use minircore::println;
 use core::panic::PanicInfo;
