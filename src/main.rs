@@ -48,7 +48,11 @@ pub extern "C" fn _start() -> ! {
     println!("It did not crash!");
 
     #[allow(clippy::empty_loop)]
-    loop {}
+    loop {
+        use minircore::print;
+        print!("-");
+        for _ in 0..10000 {}
+    }
 }
 
 

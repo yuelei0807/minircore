@@ -55,6 +55,10 @@ pub extern "C" fn _start() -> ! {
 pub fn init() {
     gdt::init();
     interrupts::init_idt();
+    //initialize the 8259 PIC in the init function
+    unsafe { interrupts::PICS.lock().initialize() };
+    //The interrupts::enable function of the x86_64 crate executes the special sti instruction (“set interrupts”) to enable external interrupts
+    x86_64::instructions::interrupts::enable();
 }
 
 #[cfg(test)]
