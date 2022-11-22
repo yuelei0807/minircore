@@ -9,7 +9,8 @@ mod vga_buffer;
 use core::panic::PanicInfo;
 
 #[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
+fn panic(info: &PanicInfo) -> ! {
+    println!("{}", info);
     loop {}
 }
 
@@ -34,9 +35,12 @@ pub extern "C" fn _start() -> ! {  //the ! return type means the function is div
             //*vga_buffer.offset(i as isize * 2) = byte;
             //call the offset method to write the corresponding color byte, 0xb is light cyan
             //*vga_buffer.offset(i as isize * 2 + 1) = 0xb;
+/*
     use core::fmt::Write;
     vga_buffer::WRITER.lock().write_str("Hello again").unwrap();
     write!(vga_buffer::WRITER.lock(), ", To print some numbers: {} {}", 1, 1.1).unwrap();
-
+*/
+    println!("This is a minircore{}", "!");
+    panic!("Some panic messages.");
     loop {}
 }

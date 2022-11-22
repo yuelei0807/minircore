@@ -1,5 +1,5 @@
 //support Rust's formatting macros, like integers
-use core::fmt::{Write, Result};
+use core::fmt::{Write, Result, Arguments};
 use lazy_static::lazy_static;
 use spin::Mutex;
 use volatile::Volatile;
@@ -179,3 +179,22 @@ pub fn print_something() {
     write!(writer, "The numbers are {} and {}", 42, 1.0/3.0).unwrap();
 }
 */
+
+// ----------------------------------------------------------------------------------
+
+#[macro_export]
+macro_rules! print {
+    ($($arg:tt)*) => ($crate::vga_buffer::_print(format_args!($($arg)*)));
+}
+
+#[macro_export]
+macro_rules! println {
+    () => ($crate::print!("\n"));
+    ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
+}
+
+#[doc(hidden)]
+pub fn _print(args: Arguments) {
+    WRITER.lock().write_fmt(args).unwrap();
+}
+
