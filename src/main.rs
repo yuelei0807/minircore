@@ -4,7 +4,7 @@
 //use the #![no_main] attribute to tell the compiler not to use the normal entry point chain
 #![no_main]
 
-//mod vga_buffer;
+mod vga_buffer;
 
 use core::panic::PanicInfo;
 
@@ -13,7 +13,7 @@ fn panic(_info: &PanicInfo) -> ! {
     loop {}
 }
 
-static HELLO: &[u8] = b"This is a minircore.";
+//static HELLO: &[u8] = b"This is a minircore.";
 
 //overwrite the crt0 entry point directly with the _start function defined by ourselves
 //mark the function as extern "C" to tell the compiler to use the C calling convention for the
@@ -23,19 +23,18 @@ pub extern "C" fn _start() -> ! {  //the ! return type means the function is div
     //vga_buffer::print_something();
     //cast the interger 0xb8000 into a raw pointer *mut, 0xb8000 is the address of the VGA text
     //buffer
-    let vga_buffer = 0xb8000 as *mut u8;
+    //let vga_buffer = 0xb8000 as *mut u8;
 
     //iterate over the bytes of the static HELLO byte string, and use the enumerate method to get a
     //running variable i
-    for (i, &byte) in HELLO.iter().enumerate() {
+    //for (i, &byte) in HELLO.iter().enumerate() {
         //the unsafe block tells the compiler that we are sure that the operations are valid
-        unsafe {
+        //unsafe {
             //call the offset method to write the string byte
-            *vga_buffer.offset(i as isize * 2) = byte;
+            //*vga_buffer.offset(i as isize * 2) = byte;
             //call the offset method to write the corresponding color byte, 0xb is light cyan
-            *vga_buffer.offset(i as isize * 2 + 1) = 0xb;
-        }
-    }
+            //*vga_buffer.offset(i as isize * 2 + 1) = 0xb;
+    vga_buffer::print_something();
 
     loop {}
 }
