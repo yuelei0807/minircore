@@ -1,4 +1,5 @@
-//support Rust's formatting macros, like integers
+//support Rust's formatting m
+//acros, like integers
 use core::fmt::{Write, Result, Arguments};
 use lazy_static::lazy_static;
 use spin::Mutex;
@@ -184,13 +185,17 @@ pub fn print_something() {
 
 #[macro_export]
 macro_rules! print {
-    ($($arg:tt)*) => ($crate::vga_buffer::_print(format_args!($($arg)*)));
+    //($($arg:tt)*) => ($crate::vga_buffer::_print(format_args!($($arg)*)));
+    ($($arg:tt)*) => {$crate::vga_buffer::_print(format_args!($($arg)*))};
 }
 
 #[macro_export]
 macro_rules! println {
     () => ($crate::print!("\n"));
-    ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
+    /*
+     ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
+    */
+    ($($arg:tt)*) => {$crate::print!("{}\n", format_args!($($arg)*))};
 }
 
 #[doc(hidden)]
@@ -198,3 +203,33 @@ pub fn _print(args: Arguments) {
     WRITER.lock().write_fmt(args).unwrap();
 }
 
+//create a simple test to verify that println works without panicking
+#[test_case]
+fn test_println_simple() {
+
+    println!("test_println_simple outputs without panicking");
+    //println!("test_println_simple output");
+}
+
+
+//create another test to ensure that no panic occurs even if many lines are printed and lines are shifted off the screen
+#[test_case]
+fn test_println_many() {
+    for _ in 0..200 {
+        println!("test_println_many outputs with multiple lines printed");
+        //println!("test_println_many output");
+    }
+}
+
+//a test to verify printed lines appeared on the screen
+#[test_case]
+fn test_println_output() {
+    let s = "Verify printed strings are in one line";
+    println!("{}", s);
+    for (i, c) in s.chars().enumerate() {
+        let screen_char = WRITER.lock().buffer.chars[BUFFER_HEIGHT - 
+        2][i].read();
+        assert_eq!(char::from(screen_char.ascii_character), c);
+    }
+
+}

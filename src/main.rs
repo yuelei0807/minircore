@@ -1,26 +1,49 @@
-//use the #![no_std] attribute to tell the compiler not to use the standard rust library but still
-//include the C runtime
 #![no_std]
-//use the #![no_main] attribute to tell the compiler not to use the normal entry point chain
 #![no_main]
-
-mod vga_buffer;
-
+#![feature(custom_test_frameworks)]
+#![test_runner(blog_os::test_runner)]
+#![reexport_test_harness_main = "test_main"]
+use minircore::println;
 use core::panic::PanicInfo;
-
+pub trait Testable {
+    fn run(&self);
+}
+#[cfg(not(test))]
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-    println!("{}", info);
+    println!("{info}");
     loop {}
 }
 
-//static HELLO: &[u8] = b"This is a minircore.";
+#[cfg(test)]
+#[panic_handler]
+fn panic(info: &PanicInfo) -> ! {
+    minircore::test_panic_handler(info)
+}
+
+#[no_mangle]
+pub extern "C" fn _start() -> ! {
+    println!("This is a minircore!");
+
+    minircore::init();
+
+    //invoke a breakpoint exception
+    x86_64::instructions::interrupts::int3();
+
+    #[cfg(test)]
+    test_main();
+
+    println!("It did not crash!");
+
+    #[allow(clippy::empty_loop)]
+    loop {}
+}
+
 
 //overwrite the crt0 entry point directly with the _start function defined by ourselves
 //mark the function as extern "C" to tell the compiler to use the C calling convention for the
 //function
-#[no_mangle]
-pub extern "C" fn _start() -> ! {  //the ! return type means the function is diverging, not allowed to ever return
+//pub extern "C" fn _start() -> ! {  //the ! return type means the function is diverging, not allowed to ever return
     //vga_buffer::print_something();
     //cast the interger 0xb8000 into a raw pointer *mut, 0xb8000 is the address of the VGA text
     //buffer
@@ -35,12 +58,3 @@ pub extern "C" fn _start() -> ! {  //the ! return type means the function is div
             //*vga_buffer.offset(i as isize * 2) = byte;
             //call the offset method to write the corresponding color byte, 0xb is light cyan
             //*vga_buffer.offset(i as isize * 2 + 1) = 0xb;
-/*
-    use core::fmt::Write;
-    vga_buffer::WRITER.lock().write_str("Hello again").unwrap();
-    write!(vga_buffer::WRITER.lock(), ", To print some numbers: {} {}", 1, 1.1).unwrap();
-*/
-    println!("This is a minircore{}", "!");
-    panic!("Some panic messages.");
-    loop {}
-}
