@@ -28,13 +28,16 @@ fn panic(info: &PanicInfo) -> ! {
 entry_point!(kernel_main);
 fn kernel_main(boot_info: &'static BootInfo) -> ! {
     //use minircore::memory::active_level_4_table;
-    use minircore::memory::translate_addr;
-    use x86_64::VirtAddr;
+    use minircore::memory;
+    use x86_64::{structures::paging::Translate, VirtAddr};
     println!("This is a minircore!");
 
     minircore::init();
 
     let phys_mem_offset = VirtAddr::new(boot_info.physical_memory_offset);
+    
+    let mapper = unsafe { memory::init(phys_mem_offset) };
+
     let addresses = [
         //the identity-mapped vga buffer page
         0xb8000,
@@ -48,7 +51,8 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
 
     for &address in &addresses {
         let virt = VirtAddr::new(address);
-        let phys = unsafe { translate_addr(virt, phys_mem_offset) };
+        //let phys = unsafe { translate_addr(virt, phys_mem_offset) };
+        let phys = mapper.translate_addr(virt);
         println!("{:?} -> {:?}", virt, phys);
     }
     //let level4_table = unsafe { active_level_4_table(phys_mem_offset) };
