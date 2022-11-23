@@ -29,32 +29,50 @@ entry_point!(kernel_main);
 fn kernel_main(boot_info: &'static BootInfo) -> ! {
     //use minircore::memory::active_level_4_table;
     use minircore::memory;
-    use x86_64::{structures::paging::Translate, VirtAddr};
+    use x86_64::VirtAddr;
     println!("This is a minircore!");
 
     minircore::init();
 
     let phys_mem_offset = VirtAddr::new(boot_info.physical_memory_offset);
     
-    let mapper = unsafe { memory::init(phys_mem_offset) };
+    let mut _mapper = unsafe { memory::init(phys_mem_offset) };
+    //let mut frame_allocator = memory::EmptyFrameAllocator;
+    let mut _frame_allocator = unsafe { memory::BootInfoFrameAllocator::init(&boot_info.memory_map) };
 
-    let addresses = [
+    // map an unused page
+    //let page = Page::containing_address(VirtAddr::new(0));
+    //memory::create_example_mapping(page, &mut mapper, &mut frame_allocator);
+
+    // write the string `New!` to the screen through the new mapping
+    //let page_ptr: *mut u64 = page.start_address().as_mut_ptr();
+    //unsafe { page_ptr.offset(400).write_volatile(0x_f021_f077_f065_f04e)};
+    #[cfg(test)]
+    test_main();
+    println!("It did not crash!");
+    //use the hlt_loop instead of the endless loop
+    minircore::hlt_loop();
+}
+
+ 
+
+
+//let addresses = [
         //the identity-mapped vga buffer page
-        0xb8000,
+        //0xb8000,
         //some code page
-        0x201008,
+        //0x201008,
         //some stack page
-        0x0100_0020_1a10,
+        //0x0100_0020_1a10,
         //virtual address mapped to physical address 0
-        boot_info.physical_memory_offset,
-    ];
+        //boot_info.physical_memory_offset,
+    //];
 
-    for &address in &addresses {
-        let virt = VirtAddr::new(address);
+    //for &address in &addresses {
+        //let virt = VirtAddr::new(address);
         //let phys = unsafe { translate_addr(virt, phys_mem_offset) };
-        let phys = mapper.translate_addr(virt);
-        println!("{:?} -> {:?}", virt, phys);
-    }
+        //let phys = mapper.translate_addr(virt);
+        //println!("{:?} -> {:?}", virt, phys);
     //let level4_table = unsafe { active_level_4_table(phys_mem_offset) };
     //for (i, entry) in level4_table.iter().enumerate() {
     //    if !entry.is_unused() {
@@ -72,15 +90,7 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
                 //}
             //}
         //}
-    //}
-    #[cfg(test)]
-    test_main();
-    println!("It did not crash!");
-    //use the hlt_loop instead of the endless loop
-    minircore::hlt_loop();
-    //#[allow(clippy::empty_loop)]
-}
-
+    //
     //use x86_64::registers::control::Cr3;
 
     //The Cr3::read function of the x86_64 returns the currently active level 4 page table from the CR3 register
@@ -91,7 +101,6 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     //fn stack_overflow() {
     //    stack_overflow(); 
     //}
-
     // trigger a stack overflow
     //stack_overflow();
 
@@ -101,16 +110,13 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     //};
     //invoke a breakpoint exception
     //x86_64::instructions::interrupts::int3();
-
     //access some memory outside the kernel, the CR2 register contains the address 0xdeadbeaf that we tried to access
     //let ptr = 0x204de7 as *mut u32;
-
     //read from a code page
     //unsafe { 
     //    let x = *ptr; 
     //}
     //println!("read worked!");
-    
     //write to a code page
     //unsafe {
         //*ptr = 42
@@ -124,7 +130,6 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     //cast the interger 0xb8000 into a raw pointer *mut, 0xb8000 is the address of the VGA text
     //buffer
     //let vga_buffer = 0xb8000 as *mut u8;
-
     //iterate over the bytes of the static HELLO byte string, and use the enumerate method to get a
     //running variable i
     //for (i, &byte) in HELLO.iter().enumerate() {
@@ -133,4 +138,3 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
             //call the offset method to write the string byte
             //*vga_buffer.offset(i as isize * 2) = byte;
             //call the offset method to write the corresponding color byte, 0xb is light cyan
-            //*vga_buffer.offset(i as isize * 2 + 1) = 0xb;
