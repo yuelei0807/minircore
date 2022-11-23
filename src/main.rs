@@ -3,9 +3,11 @@
 #![feature(custom_test_frameworks)]
 #![test_runner(minircore::test_runner)]
 #![reexport_test_harness_main = "test_main"]
+extern crate alloc;
 use bootloader::{BootInfo, entry_point};
 use minircore::println;
 use core::panic::PanicInfo;
+use alloc::boxed::Box;
 
 pub trait Testable {
     fn run(&self);
@@ -39,6 +41,8 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     let mut _mapper = unsafe { memory::init(phys_mem_offset) };
     //let mut frame_allocator = memory::EmptyFrameAllocator;
     let mut _frame_allocator = unsafe { memory::BootInfoFrameAllocator::init(&boot_info.memory_map) };
+    
+    let x = Box::new(41);
 
     // map an unused page
     //let page = Page::containing_address(VirtAddr::new(0));
@@ -49,7 +53,7 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     //unsafe { page_ptr.offset(400).write_volatile(0x_f021_f077_f065_f04e)};
     #[cfg(test)]
     test_main();
-    println!("It did not crash!");
+    println!("It did not crash {x}!");
     //use the hlt_loop instead of the endless loop
     minircore::hlt_loop();
 }
