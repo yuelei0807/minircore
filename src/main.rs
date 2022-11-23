@@ -30,7 +30,8 @@ fn panic(info: &PanicInfo) -> ! {
 entry_point!(kernel_main);
 fn kernel_main(boot_info: &'static BootInfo) -> ! {
     //use minircore::memory::active_level_4_table;
-    use minircore::memory;
+    use minircore::allocator;
+    use minircore::memory::{self, BootInfoFrameAllocator};
     use x86_64::VirtAddr;
     println!("This is a minircore!");
 
@@ -38,9 +39,11 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
 
     let phys_mem_offset = VirtAddr::new(boot_info.physical_memory_offset);
     
-    let mut _mapper = unsafe { memory::init(phys_mem_offset) };
+    let mut mapper = unsafe { memory::init(phys_mem_offset) };
     //let mut frame_allocator = memory::EmptyFrameAllocator;
-    let mut _frame_allocator = unsafe { memory::BootInfoFrameAllocator::init(&boot_info.memory_map) };
+    let mut frame_allocator = unsafe { BootInfoFrameAllocator::init(&boot_info.memory_map) };
+    
+    allocator::init_heap(&mut mapper, &mut frame_allocator).expect("heap initialization failed");
     
     let x = Box::new(41);
 
