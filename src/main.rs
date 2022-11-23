@@ -27,6 +27,12 @@ pub extern "C" fn _start() -> ! {
 
     minircore::init();
 
+    use x86_64::registers::control::Cr3;
+
+    //The Cr3::read function of the x86_64 returns the currently active level 4 page table from the CR3 register
+    let (level_4_page_table, _) = Cr3::read();
+    println!("Level 4 page table at: {:?}", level_4_page_table.start_address());
+
     // for each recursion, the return address is pushed
     //fn stack_overflow() {
     //    stack_overflow(); 
@@ -42,6 +48,21 @@ pub extern "C" fn _start() -> ! {
     //invoke a breakpoint exception
     //x86_64::instructions::interrupts::int3();
 
+    //access some memory outside the kernel, the CR2 register contains the address 0xdeadbeaf that we tried to access
+    //let ptr = 0x204de7 as *mut u32;
+
+    //read from a code page
+    //unsafe { 
+    //    let x = *ptr; 
+    //}
+    //println!("read worked!");
+    
+    //write to a code page
+    //unsafe {
+        //*ptr = 42
+    //}
+    //println!("write worked!");
+    
     #[cfg(test)]
     test_main();
 
