@@ -4,15 +4,46 @@ use x86_64::{
     structures::paging::{mapper::MapToError, FrameAllocator, Mapper, Page, PageTableFlags, Size4KiB},
     VirtAddr,
 };
-use linked_list_allocator::LockedHeap;
+use bump::BumpAllocator;
+
 #[global_allocator]
-static ALLOCATOR: LockedHeap = LockedHeap::empty();
+static ALLOCATOR: Locked<BumpAllocator> = Locked::new(BumpAllocator::new());
+//static ALLOCATOR: LockedHeap = LockedHeap::empty();
 
 //#[global_allocator]
 //static ALLOCATOR: Dummy = Dummy;
 
+pub mod bump;
 pub const HEAP_START: usize = 0x_4444_4444_0000;
 pub const HEAP_SIZE: usize = 100 * 1024;
+
+//create our own wrapper type around spin::Mutex
+pub struct Locked<A> {
+    inner: spin::Mutex<A>,
+}
+
+impl<A> Locked<A> {
+    pub const fn new(inner: A) -> Self {
+        Locked {
+            inner: spin::Mutex::new(inner),
+        }
+    }
+
+    pub fn lock(&self) -> spin::MutexGuard<A> {
+        self.inner.lock()
+    }
+}
+
+// Align the given address `addr` upwards to alignment `align`.
+fn align_up(addr: usize, align: usize) -> usize {
+    (addr + align - 1) & !(align - 1)
+    //let remainder = addr % align;
+    //if remainder == 0 {
+        //addr // addr already aligned
+    //} else {
+        //addr - remainder + align
+    //}
+}
 
 pub struct Dummy;
 
